@@ -1,36 +1,136 @@
 version: '3.9'
 
 services:
-  db:
+  identity-db:
     image: postgres:15-alpine
-    container_name: fm_postgres
+    container_name: fm_identity_db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_DB: ${IDENTITY_DB_NAME}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       TZ: ${TZ}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - identity_db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 5s
       timeout: 5s
       retries: 10
 
-  backend:
-    build: ./backend
-    container_name: fm_backend
+  admin-db:
+    image: postgres:15-alpine
+    container_name: fm_admin_db
+    environment:
+      POSTGRES_DB: ${ADMIN_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: ${TZ}
+    ports:
+      - "5434:5432"
+    volumes:
+      - admin_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  academic-db:
+    image: postgres:15-alpine
+    container_name: fm_academic_db
+    environment:
+      POSTGRES_DB: ${ACADEMIC_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: ${TZ}
+    ports:
+      - "5435:5432"
+    volumes:
+      - academic_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pgadmin:
+    image: dpage/pgadmin4:8.6
+    container_name: fm_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "5050:80"
     depends_on:
-      db:
+      - identity-db
+      - admin-db
+      - academic-db
+
+  identity-service:
+    build: ./services/identity-service
+    container_name: fm_identity_service
+    depends_on:
+      identity-db:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://identity-db:5432/${IDENTITY_DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       SPRING_PROFILES_ACTIVE: docker
+      TZ: ${TZ}
+    ports:
+      - "8081:8080"
+
+  admin-service:
+    build: ./services/admin-service
+    container_name: fm_admin_service
+    depends_on:
+      admin-db:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://admin-db:5432/${ADMIN_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      IDENTITY_BASE_URL: http://identity-service:8080
+      SPRING_PROFILES_ACTIVE: docker
+      TZ: ${TZ}
+    ports:
+      - "8082:8080"
+
+  academic-service:
+    build: ./services/academic-service
+    container_name: fm_academic_service
+    depends_on:
+      academic-db:
+        condition: service_healthy
+      admin-service:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://academic-db:5432/${ACADEMIC_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      ADMIN_BASE_URL: http://admin-service:8080
+      SPRING_PROFILES_ACTIVE: docker
+      TZ: ${TZ}
+    ports:
+      - "8083:8080"
+
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: fm_api_gateway
+    depends_on:
+      - identity-service
+      - admin-service
+      - academic-service
+    environment:
+      IDENTITY_URI: http://identity-service:8080
+      ADMIN_URI: http://admin-service:8080
+      ACADEMIC_URI: http://academic-service:8080
       TZ: ${TZ}
     ports:
       - "${BACKEND_PORT}:8080"
@@ -39,7 +139,7 @@ services:
     build: ./frontend
     container_name: fm_frontend
     depends_on:
-      - backend
+      - api-gateway
     environment:
       NEXT_PUBLIC_API_BASE_URL: http://localhost:${BACKEND_PORT}
       TZ: ${TZ}
@@ -47,5 +147,6 @@ services:
       - "${FRONTEND_PORT}:3000"
 
 volumes:
-  db_data:
-    driver: local
+  identity_db_data:
+  admin_db_data:
+  academic_db_data:
