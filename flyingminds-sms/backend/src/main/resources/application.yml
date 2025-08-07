@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: flyingminds-sms
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/flyingminds_sms}
+    username: ${SPRING_DATASOURCE_USERNAME:fm_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:fm_password}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc.lob.non_contextual_creation: true
+    show-sql: false
+  flyway:
+    locations: classpath:db/migration
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+app:
+  jwt-secret: ${JWT_SECRET:dev_jwt_secret_change_me}
+  issuer: flyingminds-sms

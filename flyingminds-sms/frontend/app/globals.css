@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --fm-bg: #0f172a;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: white;
+}
+
+.card {
+  @apply bg-slate-800/70 backdrop-blur rounded-xl border border-slate-700 p-6 shadow-xl;
+}
+
+.btn-primary {
+  @apply bg-fm-primary hover:bg-indigo-500 text-white font-semibold px-4 py-2 rounded-lg;
+}
+
+.badge {
+  @apply inline-flex items-center px-2 py-1 rounded-md text-xs font-medium;
+}
+
+.badge-success { @apply bg-fm-success/20 text-fm-success; }
+.badge-warning { @apply bg-fm-warning/20 text-fm-warning; }
+.badge-danger { @apply bg-fm-danger/20 text-fm-danger; }
+.badge-info { @apply bg-fm-info/20 text-fm-info; }

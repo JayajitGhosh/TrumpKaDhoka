@@ -1,0 +1,20 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: identity
+          uri: ${IDENTITY_URI:http://localhost:8081}
+          predicates:
+            - Path=/api/identity/**
+        - id: admin
+          uri: ${ADMIN_URI:http://localhost:8082}
+          predicates:
+            - Path=/api/admin/**
+        - id: academic
+          uri: ${ACADEMIC_URI:http://localhost:8083}
+          predicates:
+            - Path=/api/academic/**
