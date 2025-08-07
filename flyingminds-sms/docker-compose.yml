@@ -1,0 +1,51 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: fm_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: ${TZ}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: fm_backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      SPRING_PROFILES_ACTIVE: docker
+      TZ: ${TZ}
+    ports:
+      - "${BACKEND_PORT}:8080"
+
+  frontend:
+    build: ./frontend
+    container_name: fm_frontend
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:${BACKEND_PORT}
+      TZ: ${TZ}
+    ports:
+      - "${FRONTEND_PORT}:3000"
+
+volumes:
+  db_data:
+    driver: local
