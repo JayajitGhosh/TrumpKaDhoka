@@ -9,6 +9,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * Admin-facing API endpoints for onboarding and approvals.
+ * - POST /teachers: create one teacher
+ * - POST /teachers/import: bulk CSV import (idempotent)
+ * - POST /users/{id}/approve: approve a user account
+ */
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor

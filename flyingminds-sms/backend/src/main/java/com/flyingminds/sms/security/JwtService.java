@@ -11,6 +11,10 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
 
+/**
+ * Minimal JWT issuer for stateless auth.
+ * Reads secret and issuer from configuration and issues HS256 tokens.
+ */
 @Service
 public class JwtService {
     private final Key key;

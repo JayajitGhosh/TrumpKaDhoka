@@ -7,6 +7,12 @@ import lombok.*;
 import java.time.Instant;
 import java.util.Set;
 
+/**
+ * Core user identity with roles and approval status.
+ * - Email is normalized and unique (case-insensitive index).
+ * - Lifecycle hooks maintain timestamps and normalization.
+ * - Roles drive RBAC across API and UI.
+ */
 @Entity
 @Table(name = "user_accounts")
 @Getter

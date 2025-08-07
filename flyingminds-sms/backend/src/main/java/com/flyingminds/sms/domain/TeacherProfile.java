@@ -3,6 +3,10 @@ package com.flyingminds.sms.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Extended profile for teachers linked 1:1 to a user account.
+ * Holds academic details (subject, qualifications), contact and documents.
+ */
 @Entity
 @Table(name = "teacher_profiles")
 @Getter

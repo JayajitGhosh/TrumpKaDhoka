@@ -13,6 +13,10 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Idempotent seed data for local/dev environments.
+ * Creates foundational users if absent to demo flows and log in quickly.
+ */
 @Component
 @RequiredArgsConstructor
 public class DataInitializer {

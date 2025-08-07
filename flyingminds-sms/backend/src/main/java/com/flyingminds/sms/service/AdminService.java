@@ -14,6 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.*;
 
+/**
+ * Admin workflows:
+ * - Idempotent teacher creation (manual + CSV bulk)
+ * - Approvals for user accounts
+ * Enforces no duplicate emails and treats header/duplicate lines gracefully.
+ */
 @Service
 @RequiredArgsConstructor
 public class AdminService {

@@ -3,6 +3,10 @@ package com.flyingminds.sms.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * Academic class/section (e.g., 10A) with optional class teacher assignment.
+ * Admins link teachers to classes to grant read access to students.
+ */
 @Entity
 @Table(name = "school_classes")
 @Getter
