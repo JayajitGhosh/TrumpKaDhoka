@@ -4,7 +4,8 @@ WORKDIR /app
 COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
 RUN if [ -f pnpm-lock.yaml ]; then npm i -g pnpm && pnpm i --frozen-lockfile; \
     elif [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-    else npm ci; fi
+    elif [ -f package-lock.json ]; then npm ci; \
+    else npm install; fi
 
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -15,6 +16,7 @@ RUN npm run build || yarn build || pnpm build
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./package.json
