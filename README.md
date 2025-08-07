@@ -1,0 +1,2 @@
+# TrumpKaDhoka
+TEEN GUNA LAGAN
