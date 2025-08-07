@@ -24,8 +24,11 @@ public class AdminService {
 
     @Transactional
     public TeacherProfile createTeacher(String name, String email, String subject, String temporaryPassword) {
-        if (userRepo.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email already exists: " + email);
+        Optional<UserAccount> existing = userRepo.findByEmail(email);
+        if (existing.isPresent()) {
+            // If a teacher profile already exists for this user, return it; otherwise, do not mutate roles implicitly
+            return teacherRepo.findByUserId(existing.get().getId())
+                    .orElseThrow(() -> new IllegalStateException("User exists with email but is not a teacher: " + email));
         }
         UserAccount user = UserAccount.builder()
                 .email(email)
@@ -48,13 +51,27 @@ public class AdminService {
 
     @Transactional
     public List<TeacherProfile> bulkCreateTeachersFromCsv(String csv) {
-        // CSV columns: name,email,subject,temporary_password
+        // CSV columns: name,email,subject,temporary_password (header optional)
         List<TeacherProfile> created = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
         String[] lines = csv.split("\n");
-        for (String line : lines) {
-            String[] parts = line.split(",");
+        for (int i = 0; i < lines.length; i++) {
+            String raw = lines[i].trim();
+            if (raw.isEmpty()) continue;
+            if (i == 0 && raw.toLowerCase().contains("name") && raw.toLowerCase().contains("email")) continue; // skip header
+            String[] parts = raw.split(",");
             if (parts.length < 4) continue;
-            created.add(createTeacher(parts[0].trim(), parts[1].trim(), parts[2].trim(), parts[3].trim()));
+            String name = parts[0].trim();
+            String email = parts[1].trim().toLowerCase();
+            String subject = parts[2].trim();
+            String tempPassword = parts[3].trim();
+            if (seen.contains(email)) continue;
+            seen.add(email);
+            if (userRepo.existsByEmail(email)) {
+                // skip existing
+                continue;
+            }
+            created.add(createTeacher(name, email, subject, tempPassword));
         }
         return created;
     }

@@ -46,4 +46,24 @@ public class UserAccount {
     private Instant createdAt;
 
     private Instant updatedAt;
+
+    @PrePersist
+    public void prePersist() {
+        normalize();
+        Instant now = Instant.now();
+        if (createdAt == null) createdAt = now;
+        if (updatedAt == null) updatedAt = now;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        normalize();
+        updatedAt = Instant.now();
+    }
+
+    private void normalize() {
+        if (email != null) {
+            email = email.trim().toLowerCase();
+        }
+    }
 }
